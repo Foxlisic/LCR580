@@ -1,3 +1,7 @@
 tb.gtkw
 tb.hex
 tb.vcd
+main.log
+main.bin
+lcr580
+obj_dir/
