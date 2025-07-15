@@ -116,8 +116,6 @@ int main(int argc, char** argv)
 
                 // Базовый интерфейс ввода-вывода
                 if (lcr580->we) {
-
-                    if (dump) printf("W %04X <= %02X\n", lcr580->address, lcr580->out);
                     memory[lcr580->address] = lcr580->out;
                 }
 
@@ -135,13 +133,17 @@ int main(int argc, char** argv)
                 if (dump && lcr580->m0)
                 {
                     disasm(lcr580->address, 8);
-                    printf("  %04X [%02X] %s %s\n", lcr580->address, lcr580->in, ds_opcode, ds_operand);
+                    printf("  %04X [%02X] %04X %04X %04X %04X :: %s %s\n", lcr580->address, lcr580->in, lcr580->bc, lcr580->de, lcr580->hl, lcr580->af, ds_opcode, ds_operand);
                     if (lcr580->in == 0x76) dump = 0;
+
+                } else if (dump) {
+
+                    printf("- %04X [%02X] %c\n", lcr580->address, lcr580->in, lcr580->we ? 'w' : ' ');
                 }
 
                 // Исполнение инструкции
-                lcr580->clock = 0; lcr580->eval();
                 lcr580->clock = 1; lcr580->eval();
+                lcr580->clock = 0; lcr580->eval();
 
                 count++;
             }

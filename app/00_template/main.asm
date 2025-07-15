@@ -1,30 +1,23 @@
 
-            ld      sp, $8000
-            ld      a,  $01
-            out     ($fe), a
+            ld      sp, $A000
 
-            ; Заполнить атрибутикой
-            ld      hl, $5800
-            ld      a,  8*$01 + $07
-            ld      bc, $0003
-aa:         ld      (hl), a
-            inc     hl
-            djnz    aa
-            dec     c
-            jr      nz, aa
-            ld      hl, $4000
+            ld      a, $07
+            call    cls
 
-            ; Заполнить мусором
-            ld      bc, $0008
-ab:         ld      (hl), $55
-            inc     hl
-            ld      (hl), $AA
-            inc     hl
-            ld      (hl), $11
-            inc     hl
+            ld      hl, $0000
+            ld      de, s1
+L1:         ld      a, (de)
+            inc     de
+            and     a
+            jr      z, end
+            call    pchar
+            inc     l
+            jr      L1
 
-            djnz    ab
-            dec     c
-            jr      nz, ab
-
+end:
             halt
+
+s1:         defb    "Hello World!",0
+
+include     "../lib/zx2/stdlib.asm"
+include     "../lib/zx1/font.asm"

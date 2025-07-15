@@ -19,7 +19,7 @@ module LCR580
     output reg  [15:0]  de,
     output reg  [15:0]  hl,
     output reg  [15:0]  sp,
-    output      [ 7:0]  af,
+    output      [15:0]  af,
     // -----------------------
     input       [ 7:0]  port_in,        // Данные из порта
     output reg          port_rd,        // Сигнал на чтени из порта
@@ -514,6 +514,7 @@ if (reset_n == 0) begin
     bc <= 16'hAF02;
     de <= 16'h0000;
     hl <= 16'h0000;
+    sp <= 16'h0000;
 end
 else if (ce) begin
 
