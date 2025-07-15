@@ -47,7 +47,7 @@ always @(posedge clock) begin
     y <= xmax ? (ymax ? 0 : y + 1) : y;
 
     case (xa[3:0])
-    4'hD: begin a <= {ya[8:1], xa[8:4]} | 13'h0000; end
+    4'hD: begin a <= {ya[8:1], xa[8:4]} | 13'h0000; end // ya[8:7],ya[2:0],ya[5:3]
     4'hE: begin a <= {ya[8:4], xa[8:4]} | 13'h1800; t <= i; end
     4'hF: begin {c,m} <= {i,t}; end
     endcase
