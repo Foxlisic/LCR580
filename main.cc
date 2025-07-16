@@ -19,12 +19,14 @@ int videomode    = 0;
 int video_border = 0;
 int _hs = 0, _vs = 0;
 int x   = 0, y   = 0;
+int kbs = 0, kbascii = 0, irq_keyb = 0;
 uint8_t memory[65536];
 // ----------------------------------------------------
 Vlcr580* lcr580;
 // ----------------------------------------------------
 void pset(int, int, Uint32);
 void update();
+char keyboard(int, int);
 // ----------------------------------------------------
 #include "data.h"
 #include "disasm.cc"
@@ -92,10 +94,13 @@ int main(int argc, char** argv)
         // Прием событий
         while (SDL_PollEvent(& evt))
         {
+            int keyc = evt.key.keysym.scancode;
+            int keyt;
+
             switch (evt.type)
             {
                 // Выход из приложения
-                case SDL_QUIT:
+                case SDL_QUIT: {
 
                     free(screen_buffer);
                     SDL_DestroyTexture(sdl_screen_texture);
@@ -104,6 +109,11 @@ int main(int argc, char** argv)
                     SDL_DestroyWindow(sdl_window);
                     SDL_Quit();
                     return 0;
+                }
+
+                // Чтение клавиши
+                case SDL_KEYDOWN: keyt = keyboard(keyc, 1); if (keyt) { kbascii = keyt; irq_keyb = 1; } break;
+                case SDL_KEYUP:   keyboard(keyc, 0); break;
             }
         }
 
@@ -127,6 +137,14 @@ int main(int argc, char** argv)
                 {
                     case 0x00: videomode    = lcr580->out; break;
                     case 0xFE: video_border = lcr580->out & 7; break;
+                }
+
+                // Чтение из порта
+                if (lcr580->port_rd)
+                switch (lcr580->address)
+                {
+                    case 0xFE: lcr580->port_in = kbascii; irq_keyb = 0; break;
+                    case 0x01: lcr580->port_in = irq_keyb; break;
                 }
 
                 // Отладчик

@@ -9,6 +9,7 @@ syn:
 cdb:
 	quartus_cdb c4 -c c4 --update_mif
 	quartus_asm --read_settings_files=on --write_settings_files=off c4 -c c4
+	make pgm
 sta:
 	quartus_sta c4 -c c4
 clean:

@@ -57,7 +57,6 @@ pll UPLL
 // -----------------------------------------------------------------------------
 
 wire [15:0] a;
-wire [ 7:0] pin;
 wire [ 7:0] o;
 wire        w, port_we, port_rd, iff1;
 
@@ -91,12 +90,34 @@ LCR580 cpu
 // Обработка портов и прерываний
 // -----------------------------------------------------------------------------
 
+reg [7:0]   pin;
+reg [7:0]   keyb;
+reg         irq_keyb_p;
+reg         irq_keyb_n;
+wire        irq_keyb = irq_keyb_p ^ irq_keyb_n;
+
+// Запись в порт
 always @(posedge clock_25)
 begin
 
     if (port_we)
     case (a)
-    16'h00FE: begin border <= o[2:0]; end
+    16'hFE: begin border <= o[2:0]; end
+    endcase
+
+    // Принята клавиша с клавиатуры, установить irq_keyb=1
+    if (kdone) begin keyb <= ascii; irq_keyb_p <= irq_keyb_p ^ irq_keyb; end
+
+end
+
+// Чтение из порта
+always @(negedge clock_25)
+if (port_rd) begin
+
+    case (a)
+    // Прочитать клавишу, установить irq_keyb=0
+    16'hFE: begin pin <= keyb; irq_keyb_n <= irq_keyb_n ^ irq_keyb ^ 1; end
+    16'h01: begin pin <= irq_keyb; end
     endcase
 
 end
@@ -135,6 +156,32 @@ m32 M32
     .qx         (vga_i)
 );
 
+m8 M8
+(
+    .clock      (clock_100),
+    .a          (a[12:0]),
+    .q          (m8_i),
+    .d          (o),
+    .w          (w & m8a)
+);
+
+// Периферия
+// -----------------------------------------------------------------------------
+
+wire [7:0]  ascii;
+wire        kdone;
+
+keyboard K1
+(
+    .clock      (clock_25),
+    .reset_n    (reset_n),
+    .ps_clk     (PS2_CLK),
+    .ps_dat     (PS2_DAT),
+    .ascii      (ascii),
+    .kdone      (kdone)
+);
+
 endmodule
 
 `include "../lcr580.v"
+`include "../keyboard.v"
