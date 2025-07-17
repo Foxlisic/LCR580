@@ -98,6 +98,7 @@ wire [ 2:0] border;
 // Клавиатура
 wire [ 7:0] kdata, kbd;
 wire        hit, kdone;
+wire        vretrace;
 
 // Тактовый генератор
 // ---------------------------------------------------------------------
@@ -132,6 +133,7 @@ io IO
     .pin        (pin),
     .kdone      (kdone),
     .kdata      (kdata),
+    .vretrace   (vretrace),
     .port_rd    (port_rd),
     .port_we    (port_we),
     .border     (border),
@@ -175,7 +177,8 @@ vga UVGA
     .vs         (VGA_VS),
     .a          (vga_a),
     .i          (vga_i),
-    .border     (border)
+    .border     (border),
+    .vretrace   (vretrace)
 );
 
 // Блоки оперативной памяти 64K

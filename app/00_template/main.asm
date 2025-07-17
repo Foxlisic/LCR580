@@ -1,8 +1,8 @@
             jr      boot
 ; ------------------------------------------------------------------------------
-defw        iKeyb                   ; IRQ#1
-defw        $0000                   ; IRQ#2
-defw        $0000                   ; IRQ#3
+defw        iKeyb                   ; IRQ#1 KEYBOARD
+defw        iRetrace                ; IRQ#2 VRETRACE
+defw        $0000                   ; IRQ#3 TIMER
 ; ------------------------------------------------------------------------------
 boot:       ld      sp, $8000
             ld      a, $07
@@ -16,10 +16,10 @@ L1:         ld      a, (de)
             call    pchar
             inc     l
             jr      L1
-L2:         ei
-            ld      hl, $0000
-            halt
+L2:         ld      hl, $0000
+            ei
 
+            halt
 s1:         defb    "For your consideration",0
 
 ; For YC?
@@ -27,6 +27,7 @@ iKeyb:      in      a, ($FE)
             call    pchar
             inc     l
             reti
+iRetrace:   reti
 
 ; ------------------------------------------------------------------------------
 include     "../lib/zx2/stdlib.asm"

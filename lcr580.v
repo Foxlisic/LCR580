@@ -95,7 +95,7 @@ wire        m20  = opc[2:0] == 3'b110;
 wire [15:0] sign = {{8{in[7]}}, in[7:0]};
 wire [3:0]  cond = {psw[SF], psw[PF], psw[CF], psw[ZF]};
 wire        cc   = (cond[{1'b0,opc[4]}] == opc[3]);
-wire        ccc  = (cond[opc[5:4]]      == opc[3]) || (opc == 8'hC9) || (opc == 8'hCD);
+wire        ccc  = (cond[opc[5:4]]      == opc[3]) || (opc == 8'hC9) || (opc == 8'hCD) || (opc == 8'hC3);
 wire        cmp  = (opc[5:3] != CMP);
 // ---------------------------------------------------------------------
 wire [8:0]  alur =

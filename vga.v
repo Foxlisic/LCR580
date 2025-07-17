@@ -8,7 +8,8 @@ module vga
     output              vs,
     output  reg [12:0]  a,
     input       [ 7:0]  i,
-    input       [ 2:0]  border
+    input       [ 2:0]  border,
+    output              vretrace
 );
 
 // ---------------------------------------------------------------------
@@ -20,6 +21,7 @@ parameter
 // ---------------------------------------------------------------------
 assign hs = x < (hzb + hzv + hzf);
 assign vs = y < (vtb + vtv + vtf);
+assign vretrace = xmax & ymax;
 // ---------------------------------------------------------------------
 reg  [ 9:0] x = 0;
 reg  [ 9:0] y = 0;

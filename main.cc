@@ -21,7 +21,7 @@ int _hs = 0, _vs = 0;
 int x   = 0, y   = 0;
 int dump      = 0;
 int dump_init = 0;
-int kbs = 0, kbascii = 0, irq_keyb = 0;
+int kbs = 0, kbascii = 0, irq_vect = 0;
 uint8_t memory[65536];
 // ----------------------------------------------------
 Vlcr580* lcr580;
@@ -51,7 +51,8 @@ int main(int argc, char** argv)
         {
             switch (argv[ia][1])
             {
-                case 'd': dump = 1; dump_init = 1; break;
+                case 'd': dump = 1; dump_init = 1; break; // Только инструкции
+                case 'D': dump = 2; dump_init = 2; break; // Расширенный дамп
             }
 
         } else {
@@ -155,8 +156,7 @@ int main(int argc, char** argv)
                 if (lcr580->port_rd)
                 switch (lcr580->address)
                 {
-                    case 0xFE: lcr580->port_in = kbascii; irq_keyb = 0; break;
-                    case 0x01: lcr580->port_in = irq_keyb; break;
+                    case 0xFE: lcr580->port_in = kbascii; break;
                 }
 
                 // Отладчик
@@ -166,14 +166,30 @@ int main(int argc, char** argv)
                     printf("  %04X [%02X] %04X %04X %04X %04X :: %s %s\n", lcr580->address, lcr580->in, lcr580->bc, lcr580->de, lcr580->hl, lcr580->af, ds_opcode, ds_operand);
                     if (lcr580->in == 0x76) dump = 0;
 
-                } else if (dump) {
-
+                } else if (dump == 2) {
                     printf("- %04X [%02X] %c\n", lcr580->address, lcr580->in, lcr580->we ? 'w' : ' ');
                 }
 
                 // Исполнение инструкции
                 lcr580->clock = 1; lcr580->eval();
                 lcr580->clock = 0; lcr580->eval();
+
+                // Возможны прерывания
+                if (lcr580->iff1 && irq_vect) {
+
+                    dump = dump_init;
+                    int vect = 0;
+
+                    if      (irq_vect & 1) { vect = 1; irq_vect &= ~1; }
+                    else if (irq_vect & 2) { vect = 2; irq_vect &= ~2; }
+                    else if (irq_vect & 4) { vect = 3; irq_vect &= ~4; }
+                    else if (irq_vect & 8) { vect = 4; irq_vect &= ~8; }
+
+                    if (vect) {
+                        lcr580->irq  = 1 - lcr580->irq;
+                        lcr580->vect = vect;
+                    }
+                }
 
                 count++;
             }
@@ -183,6 +199,8 @@ int main(int argc, char** argv)
         while (nticks - pticks < length);
 
         pticks = nticks;
+
+        call_irq(2);
         update();
 
         // Обновление экрана
@@ -208,10 +226,5 @@ void pset(int x, int y, Uint32 cl)
 // Вызов вектора прерывания
 void call_irq(int vect)
 {
-    if (lcr580->iff1) {
-
-        dump = dump_init;
-        lcr580->irq  = 1 - lcr580->irq;
-        lcr580->vect = vect;
-    }
+    irq_vect |= (1 << (vect - 1));
 }

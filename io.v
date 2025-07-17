@@ -7,9 +7,10 @@ module io
     input       [ 7:0]  out,
     input               port_rd,
     input               port_we,
-    // Клава
+    // Клава и периферия разная
     input               kdone,
     input       [ 7:0]  kdata,
+    input               vretrace,
     // Прерывания
     input               iff1,
     output  reg         irq,
@@ -47,8 +48,8 @@ else begin
     if (iff1) begin
 
         if      (queue[0]) begin vect <= 1; irq <= ~irq; queue[0] <= 1'b0; end // KEYB
-        else if (queue[1]) begin vect <= 2; irq <= ~irq; queue[1] <= 1'b0; end // TIMER
-        else if (queue[2]) begin vect <= 3; irq <= ~irq; queue[2] <= 1'b0; end // VRETRACE
+        else if (queue[1]) begin vect <= 2; irq <= ~irq; queue[1] <= 1'b0; end // VRETRACE
+        else if (queue[2]) begin vect <= 3; irq <= ~irq; queue[2] <= 1'b0; end // TIMER
 
     end
 
@@ -59,7 +60,8 @@ else begin
     endcase
 
     // Отслеживание нажатия на кнопку клавиатуры
-    if (kdone) begin keyb <= kdata; queue[0] <= 1'b1; end
+    if (kdone)    begin queue[0] <= 1'b1; keyb <= kdata; end
+    if (vretrace) begin queue[1] <= 1'b1; end
 
 end
 
