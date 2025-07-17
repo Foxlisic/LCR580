@@ -1,11 +1,11 @@
 `timescale 10ns / 1ns
 module tb;
 // ---------------------------------------------------------------------
-reg         clock, clock25, reset_n;
+reg         clock, clock_25, reset_n;
 always #0.5 clock       = ~clock;
-always #2.0 clock25     = ~clock25;
+always #2.0 clock_25    = ~clock_25;
 // ---------------------------------------------------------------------
-initial begin reset_n = 0; clock = 0; clock25 = 0; #3.0 reset_n = 1; #2500 $finish; end
+initial begin reset_n = 0; clock = 0; clock_25 = 0; #3.0 reset_n = 1; #2500 $finish; end
 initial begin $dumpfile("tb.vcd"); $dumpvars(0, tb); end
 initial begin $readmemh("tb.hex", mem, 0); end
 // ---------------------------------------------------------------------
@@ -15,11 +15,16 @@ wire [15:0] a;
 wire [ 7:0] i = mem[a];
 wire [ 7:0] pin;
 wire [ 7:0] o;
-wire        w, pr, pw, iff1;
+wire        w, pr, pw;
+wire        iff1, irq;
+wire [ 3:0] vector;
+wire [ 2:0] border;
+wire [ 7:0] kdata;
+wire        kdone;
 // ---------------------------------------------------------------------
 LCR580 cpu
 (
-    .clock      (clock25),
+    .clock      (clock_25),
     .reset_n    (reset_n),
     .ce         (1'b1),
     .m0         (m0),
@@ -27,10 +32,29 @@ LCR580 cpu
     .in         (i),
     .out        (o),
     .we         (w),
+    .irq        (irq),
+    .iff1       (iff1),
+    .vector     (vector),
     .port_in    (pin),
     .port_rd    (pr),
-    .port_we    (pw),
-    .iff1       (iff1)
+    .port_we    (pw)
+);
+// ---------------------------------------------------------------------
+io IO
+(
+    .clock      (clock_25),
+    .reset_n    (reset_n),
+    .address    (a),
+    .out        (o),
+    .irq        (irq),
+    .iff1       (iff1),
+    .vector     (vector),
+    .pin        (pin),
+    .kdone      (kdone),
+    .kdata      (kdata),
+    .port_rd    (port_rd),
+    .port_we    (port_we),
+    .border     (border)
 );
 
 endmodule

@@ -85,8 +85,10 @@ wire [ 7:0] i;
 wire        w;
 
 // Порты и прерывания
+wire        irq, iff1;
 wire [ 7:0] pin;
-wire        port_we, port_rd, iff1;
+wire [ 3:0] vector;
+wire        port_we, port_rd;
 
 // Адаптер
 wire [12:0] vga_a;
@@ -124,6 +126,9 @@ io IO
     .reset_n    (reset_n),
     .address    (a),
     .out        (o),
+    .irq        (irq),
+    .iff1       (iff1),
+    .vector     (vector),
     .pin        (pin),
     .kdone      (kdone),
     .kdata      (kdata),
@@ -151,6 +156,9 @@ LCR580 cpu
     .port_in    (pin),
     .port_rd    (port_rd),
     .port_we    (port_we),
+    // --- Прерывания
+    .irq        (irq),
+    .vector     (vector),
     .iff1       (iff1)
 );
 

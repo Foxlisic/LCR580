@@ -1,9 +1,9 @@
 VLIB="/usr/share/verilator/include"
 ILIB=$(VLIB)/verilated_threads.cpp $(VLIB)/verilated.cpp obj_dir/Vlcr580__ALL.a
 
-all: ica app
+all: ica # app
 ica:
-	iverilog -g2005-sv -DICARUS=1 -o tb.qqq tb.v lcr580.v
+	iverilog -g2005-sv -DICARUS=1 -o tb.qqq tb.v lcr580.v io.v
 	vvp tb.qqq >> /dev/null
 	rm tb.qqq
 app: syn

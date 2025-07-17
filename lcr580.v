@@ -10,21 +10,33 @@ module LCR580
     input               reset_n,
     input               ce,
     output              m0,
+
+    // Память
+    // -----------------------
     output      [15:0]  address,        // Адрес в памяти или порт
     input       [ 7:0]  in,
     output reg  [ 7:0]  out,
     output reg          we,
+
     // Регистры
+    // -----------------------
     output reg  [15:0]  bc,
     output reg  [15:0]  de,
     output reg  [15:0]  hl,
     output reg  [15:0]  sp,
     output      [15:0]  af,
+
+    // Прерывание
+    // -----------------------
+    output reg          iff1,           // Разрешение прерываний
+    input               irq,            // Работает на изменении
+    input       [ 3:0]  vector,         // Вектор запроса
+
+    // Порты
     // -----------------------
     input       [ 7:0]  port_in,        // Данные из порта
     output reg          port_rd,        // Сигнал на чтени из порта
-    output reg          port_we,        // Сигнал на запись в порт
-    output reg          iff1            // Разрешение прерываний
+    output reg          port_we         // Сигнал на запись в порт
 );
 // ---------------------------------------------------------------------
 `define TERM begin sw <= 0; t <= 0; end
@@ -46,7 +58,10 @@ reg [ 7:0]  a   = 8'h09,
 reg         sw;         // =1 Адрес указывает на CP, иначе =0 PC
 reg [15:0]  cp;         // Адрес для считывания данных из памяти
 reg [ 7:0]  opcode;     // Сохраненный опкод
+reg [ 7:0]  extend;     // Дополнительный опкод
 reg [ 4:0]  t;          // Исполняемый такт опкода [0..31]
+reg         irqp;       // Прежнее значение IRQ
+reg [ 2:0]  intr;       // Исполнение прерывания
 // ---------------------------------------------------------------------
 reg         b;          // =1 Запись d в 8-битный регистр n
 reg         w;          // =1 Запись d в 16-битный регистр n
@@ -124,17 +139,50 @@ wire [16:0] addhl = hl + r16;
 // ----------------------------------------------------------------------
 
 always @(posedge clock)
+// Сброс процессора
 if (reset_n == 0) begin
-    t   <= 0;           // Установить чтение кода на начало
-    d   <= 0;
-    we  <= 0;
-    cp  <= 0;
-    sw  <= 0;           // Позиционировать память к PC
-    pc  <= 16'h0000;    // Указатель на СТАРТ
-    psw <= 8'b00000001;
-    opcode <= 0;
-    iff1 <= 0;          // Отключение прерываний
+    t       <= 0;           // Установить чтение кода на начало
+    d       <= 0;
+    we      <= 0;
+    cp      <= 0;
+    sw      <= 0;           // Позиционировать память к PC
+    pc      <= 16'h0000;    // Указатель на СТАРТ
+    psw     <= 8'b00000001;
+    opcode  <= 0;
+    extend  <= 0;
+    iff1    <= 0;           // Включение и выключение прерываний
+    irqp    <= 0;
+    intr    <= 0;
 end
+// Исполнение прерывания
+else if (ce && intr)
+case (intr)
+
+    1: begin intr <= 2; cp <= cpn; out <= pc[15:8]; end
+    2: begin intr <= 3; cp <= 2*t; we  <= 0; end
+    3: begin intr <= 4; cp <= cpn; opcode <= in; end
+    4: begin intr <= 0; pc <= {in, opcode}; sw <= 0; t <= 0; end
+
+endcase
+// Вызов прерывания при чтении опкода: 5T
+else if (ce && irqp != irq && iff1 && m0) begin
+
+    t    <= vector;
+    irqp <= irq;
+    iff1 <= 0;
+    intr <= 1;
+    sw   <= 1;
+    we   <= 1;
+    out  <= pc[7:0];
+    cp   <= sp - 2;
+    d    <= sp - 2;
+    n    <= 3;
+    w    <= 1;
+    b    <= 0;
+    x    <= 0;
+
+end
+// Обычное исполнение кода
 else if (ce) begin
 
     t  <= t + 1;        // Счетчик микрооперации
@@ -443,6 +491,28 @@ else if (ce) begin
         0: begin x <= 1; `TERM; end
 
     endcase
+    8'b11101101: case (t) // ED: Extended
+
+        1: begin
+
+            pc     <= pcn;
+            extend <= in;
+
+            casex (in)
+            8'b01001101: begin sw <= 1; cp <= sp; w <= 1; d <= sp + 2; n <= 3; end // RETI
+            endcase
+
+        end
+
+        2:  casex (extend)
+            8'b01001101: begin cp <= cpn; d <= in; end // RETI
+            endcase
+
+        3:  casex (extend)
+            8'b01001101: begin sw <= 0; pc <= {in, d[7:0]}; iff1 <= 1'b1; `TERM end // RETI
+            endcase
+
+    endcase
     8'b11xxx100,
     8'b11001101: case (t) // 1/5T CALL ccc
 
@@ -511,10 +581,12 @@ end
 // Запись данных в регистры
 always @(negedge clock)
 if (reset_n == 0) begin
+
     bc <= 16'hAF02;
     de <= 16'h0000;
     hl <= 16'h0000;
     sp <= 16'h0000;
+
 end
 else if (ce) begin
 

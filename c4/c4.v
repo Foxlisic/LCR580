@@ -143,22 +143,7 @@ m8 M8
     .w          (w & m8a)
 );
 
-// Периферия
-// -----------------------------------------------------------------------------
-
-keyboard K1
-(
-    .clock      (clock_25),
-    .reset_n    (reset_n),
-    .ps_clk     (PS2_CLK),
-    .ps_dat     (PS2_DAT),
-    .hit        (hit),
-    .ascii      (ascii),
-    .kdone      (kdone)
-);
-
 endmodule
 
 `include "../lcr580.v"
-`include "../keyboard.v"
 `include "../vga.v"
