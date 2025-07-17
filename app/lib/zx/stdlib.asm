@@ -1,7 +1,13 @@
+; Переменные
+; ------------------------------------------------------------------------------
+curcl:      defb    $00
+curxy:      defw    $0000
+
 ; Чистка экрана от мусора
 ; ------------------------------------------------------------------------------
 
 cls:        ld      b, a
+            ld      (curcl), a
             rrca
             rrca
             rrca
@@ -32,6 +38,7 @@ stosb:      ld      (hl), a
 pchar:      push    hl
             push    de
             push    bc
+            push    hl
             ex      de, hl              ; Сохранить HL в DE
             sub     a, $20              ; Сместить ASCII
             jr      nc, pchar_L1
@@ -54,7 +61,43 @@ pchar_L0:   ld      a, (de)
             add     $20
             ld      l, a
             djnz    pchar_L0
+            pop     hl
+            ld      b, 0x58             ; Установка атрибута
+            ld      c, l
+            ld      l, h
+            ld      h, 0
+            add     hl, hl
+            add     hl, hl
+            add     hl, hl
+            add     hl, hl
+            add     hl, hl
+            add     hl, bc              ; HL=0x5800 + 32*Y + C
+            ld      a, (curcl)
+            ld      (hl), a             ; Обновление атрибута
             pop     bc
             pop     de
             pop     hl
             ret
+
+; Пропечать A в режиме телетайпа (HL)
+; ------------------------------------------------------------------------------
+tchar:      call    pchar
+            inc     l
+            ld      a, l
+            and     $1F
+            jr      nz, tchar_e
+            ld      l, a
+            inc     h
+            ; h >= 24
+tchar_e:    ld      (curxy), hl
+            ret
+
+; Пропечатка DE-строки в H=Y,L=X
+; ------------------------------------------------------------------------------
+
+pstr:       ld      a, (de)
+            inc     de
+            and     a
+            ret     z
+            call    tchar
+            jr      pstr

@@ -2,25 +2,21 @@
 ; ------------------------------------------------------------------------------
 defw        iKeyb                   ; IRQ#1 KEYBOARD
 defw        iRetrace                ; IRQ#2 VRETRACE
-defw        $0000                   ; IRQ#3 TIMER
 ; ------------------------------------------------------------------------------
 boot:       ld      sp, $8000
             ld      a, $07
             call    cls
-            ld      hl, $1705
+
+            ld      a, 8*3 + 0
+            ld      (curcl), a
+
+            ld      hl, $0000
             ld      de, s1
-L1:         ld      a, (de)
-            inc     de
-            and     a
-            jr      z, L2
-            call    pchar
-            inc     l
-            jr      L1
-L2:         ld      hl, $0000
-            ei
+            call    pstr
+
 
             halt
-s1:         defb    "For your consideration",0
+s1:         defb    "For your consideration For Your Monoment Monumentos",0
 
 ; For YC?
 iKeyb:      in      a, ($FE)
@@ -30,5 +26,5 @@ iKeyb:      in      a, ($FE)
 iRetrace:   reti
 
 ; ------------------------------------------------------------------------------
-include     "../lib/zx2/stdlib.asm"
-include     "../lib/zx1/font.asm"
+include     "../lib/zx/stdlib.asm"
+include     "../lib/zx/font.asm"
