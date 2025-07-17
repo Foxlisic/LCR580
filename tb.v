@@ -17,7 +17,7 @@ wire [ 7:0] pin;
 wire [ 7:0] o;
 wire        w, pr, pw;
 wire        iff1, irq;
-wire [ 3:0] vector;
+wire [ 3:0] vect;
 wire [ 2:0] border;
 wire [ 7:0] kdata;
 wire        kdone;
@@ -34,7 +34,7 @@ LCR580 cpu
     .we         (w),
     .irq        (irq),
     .iff1       (iff1),
-    .vector     (vector),
+    .vect       (vect),
     .port_in    (pin),
     .port_rd    (pr),
     .port_we    (pw)
@@ -48,7 +48,7 @@ io IO
     .out        (o),
     .irq        (irq),
     .iff1       (iff1),
-    .vector     (vector),
+    .vect       (vect),
     .pin        (pin),
     .kdone      (kdone),
     .kdata      (kdata),

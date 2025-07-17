@@ -87,7 +87,7 @@ wire        w;
 // Порты и прерывания
 wire        irq, iff1;
 wire [ 7:0] pin;
-wire [ 3:0] vector;
+wire [ 3:0] vect;
 wire        port_we, port_rd;
 
 // Адаптер
@@ -128,7 +128,7 @@ io IO
     .out        (o),
     .irq        (irq),
     .iff1       (iff1),
-    .vector     (vector),
+    .vect       (vect),
     .pin        (pin),
     .kdone      (kdone),
     .kdata      (kdata),
@@ -158,7 +158,7 @@ LCR580 cpu
     .port_we    (port_we),
     // --- Прерывания
     .irq        (irq),
-    .vector     (vector),
+    .vect       (vect),
     .iff1       (iff1)
 );
 

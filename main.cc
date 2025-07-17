@@ -19,6 +19,8 @@ int videomode    = 0;
 int video_border = 0;
 int _hs = 0, _vs = 0;
 int x   = 0, y   = 0;
+int dump      = 0;
+int dump_init = 0;
 int kbs = 0, kbascii = 0, irq_keyb = 0;
 uint8_t memory[65536];
 // ----------------------------------------------------
@@ -27,6 +29,7 @@ Vlcr580* lcr580;
 void pset(int, int, Uint32);
 void update();
 char keyboard(int, int);
+void call_irq(int);
 // ----------------------------------------------------
 #include "data.h"
 #include "disasm.cc"
@@ -35,8 +38,8 @@ char keyboard(int, int);
 int main(int argc, char** argv)
 {
     FILE* fp;
+
     int pticks = 0, nticks, ia = 1;
-    int dump = 0;
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
         exit(1);
@@ -48,7 +51,7 @@ int main(int argc, char** argv)
         {
             switch (argv[ia][1])
             {
-                case 'd': dump = 1; break;
+                case 'd': dump = 1; dump_init = 1; break;
             }
 
         } else {
@@ -111,9 +114,18 @@ int main(int argc, char** argv)
                     return 0;
                 }
 
-                // Чтение клавиши
-                case SDL_KEYDOWN: keyt = keyboard(keyc, 1); if (keyt) { kbascii = keyt; irq_keyb = 1; } break;
-                case SDL_KEYUP:   keyboard(keyc, 0); break;
+                // Нажать на клавишу
+                case SDL_KEYDOWN:
+
+                    if (keyt = keyboard(keyc, 1)) {
+                        kbascii = keyt;
+                        call_irq(1);
+                    }
+
+                    break;
+
+                // Отжать клавишу как Б-г
+                case SDL_KEYUP: keyboard(keyc, 0); break;
             }
         }
 
@@ -191,4 +203,15 @@ void pset(int x, int y, Uint32 cl)
     }
 
     screen_buffer[width*y + x] = cl;
+}
+
+// Вызов вектора прерывания
+void call_irq(int vect)
+{
+    if (lcr580->iff1) {
+
+        dump = dump_init;
+        lcr580->irq  = 1 - lcr580->irq;
+        lcr580->vect = vect;
+    }
 }

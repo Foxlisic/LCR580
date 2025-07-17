@@ -30,7 +30,7 @@ module LCR580
     // -----------------------
     output reg          iff1,           // Разрешение прерываний
     input               irq,            // Работает на изменении
-    input       [ 3:0]  vector,         // Вектор запроса
+    input       [ 3:0]  vect,           // Вектор запроса
 
     // Порты
     // -----------------------
@@ -167,7 +167,7 @@ endcase
 // Вызов прерывания при чтении опкода: 5T
 else if (ce && irqp != irq && iff1 && m0) begin
 
-    t    <= vector;
+    t    <= vect;
     irqp <= irq;
     iff1 <= 0;
     intr <= 1;
