@@ -6,18 +6,11 @@ defw        iRetrace                ; IRQ#2 VRETRACE
 boot:       ld      sp, $8000
             ld      a, $07
             call    cls
-            ld      a, 0x30
-            ld      (curcl), a      ; Каким цветом будет вывод
-            ld      hl, $0000       ; Вывести строк в X=0,Y=0
-            ld      de, s1
-            call    pstr
             halt
 ; ------------------------------------------------------------------------------
 iKeyb:      in      a, ($FE)
             call    pchr
             inc     l
 iRetrace:   reti
-; ------------------------------------------------------------------------------
-s1:         defb    "X-Tension Cosmic Space Game 2025",0
 ; ------------------------------------------------------------------------------
 include     "zx.asm"
