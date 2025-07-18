@@ -7,20 +7,19 @@ boot:       ld      sp, $8000
             ld      a, $07
             call    cls
 
-            ld      a, 8*3 + 0
+            ld      a, 0x30
             ld      (curcl), a
 
             ld      hl, $0000
             ld      de, s1
             call    pstr
 
-
             halt
-s1:         defb    "For your consideration For Your Monoment Monumentos",0
+s1:         defb    "X-Tension Cosmic Space Game 2025",0
 
 ; For YC?
 iKeyb:      in      a, ($FE)
-            call    pchar
+            call    pchr
             inc     l
             reti
 iRetrace:   reti

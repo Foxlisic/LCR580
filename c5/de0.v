@@ -170,9 +170,9 @@ LCR580 cpu
 vga UVGA
 (
     .clock      (clock_25),
-    .r          (VGA_R[3]),
-    .g          (VGA_G[3]),
-    .b          (VGA_B[3]),
+    .r          (VGA_R),
+    .g          (VGA_G),
+    .b          (VGA_B),
     .hs         (VGA_HS),
     .vs         (VGA_VS),
     .a          (vga_a),

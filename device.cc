@@ -21,7 +21,7 @@ void update()
 
                     for (int i = 0; i < 8; i++)
                     {
-                        color = ((a & 0x80) ? b : (b >> 3)) & 7;
+                        color = ((a & 0x80) ? b : (b >> 4)) & 7;
                         pset(x+i,y,dac[color]);
                         a <<= 1;
                     }

@@ -11,6 +11,7 @@ cls:        ld      b, a
             rrca
             rrca
             rrca
+            rrca
             out     ($FE), a
             ld      a, b
             ld      hl, $5800
@@ -35,7 +36,7 @@ stosb:      ld      (hl), a
 ; Печать символа A в позиции H=Y,L=X
 ; ------------------------------------------------------------------------------
 
-pchar:      push    hl
+pchr:       push    hl
             push    de
             push    bc
             push    hl
@@ -81,7 +82,7 @@ pchar_L0:   ld      a, (de)
 
 ; Пропечать A в режиме телетайпа (HL)
 ; ------------------------------------------------------------------------------
-tchar:      call    pchar
+tchar:      call    pchr
             inc     l
             ld      a, l
             and     $1F

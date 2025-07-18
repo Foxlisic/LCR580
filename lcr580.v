@@ -39,7 +39,7 @@ module LCR580
     output reg          port_we         // Сигнал на запись в порт
 );
 // ---------------------------------------------------------------------
-`define TERM begin sw <= 0; t <= 0; end
+`define TERM begin sw <= 0; t <= 0; ed <= 0; end
 // ---------------------------------------------------------------------
 assign address = sw ? cp : pc;
 assign m0 = (t == 0);
@@ -56,9 +56,9 @@ reg [ 7:0]  a   = 8'h09,
             psw = 8'b00000011;
 // ---------------------------------------------------------------------
 reg         sw;         // =1 Адрес указывает на CP, иначе =0 PC
+reg         ed;         // =1 Это расширенная инструкция
 reg [15:0]  cp;         // Адрес для считывания данных из памяти
 reg [ 7:0]  opcode;     // Сохраненный опкод
-reg [ 7:0]  extend;     // Дополнительный опкод
 reg [ 4:0]  t;          // Исполняемый такт опкода [0..31]
 reg         irqp;       // Прежнее значение IRQ
 reg [ 2:0]  intr;       // Исполнение прерывания
@@ -87,7 +87,7 @@ wire [ 7:0] op20 =
     opc[2:0] == 3'b100 ? hl[15:8] : opc[2:0] == 3'b101 ? hl[ 7:0] :
     opc[2:0] == 3'b110 ? in       : a;
 // ---------------------------------------------------------------------
-wire [ 7:0] opc = t ? opcode : in;
+wire [ 7:0] opc  = t ? (ed && t == 1 ? in : opcode) : in;
 wire [15:0] pcn  = pc + 1;
 wire [15:0] cpn  = cp + 1;
 wire        m53  = opc[5:3] == 3'b110;
@@ -149,7 +149,7 @@ if (reset_n == 0) begin
     pc      <= 16'h0000;    // Указатель на СТАРТ
     psw     <= 8'b00000001;
     opcode  <= 0;
-    extend  <= 0;
+    ed      <= 0;
     iff1    <= 0;           // Включение и выключение прерываний
     irqp    <= 0;
     intr    <= 0;
@@ -196,8 +196,11 @@ else if (ce) begin
     // Запись опкода на первом такте выполнения инструкции
     if (m0) begin opcode <= in; pc <= pcn; end
 
+    // Расширенная инструкция
+    if (ed && t == 1) opcode <= in;
+
     // Исполнение инструкции
-    casex (opc)
+    casex ({ed,opc})
 
     // === ИНСТРУКЦИИ 00-3F ===
     8'b00000000: case (t) // 1T NOP
@@ -491,26 +494,9 @@ else if (ce) begin
         0: begin x <= 1; `TERM; end
 
     endcase
-    8'b11101101: case (t) // ED: Extended
+    8'b11101101: case (t) // 2T+ ED: Extended
 
-        1: begin
-
-            pc     <= pcn;
-            extend <= in;
-
-            casex (in)
-            8'b01001101: begin sw <= 1; cp <= sp; w <= 1; d <= sp + 2; n <= 3; end // RETI
-            endcase
-
-        end
-
-        2:  casex (extend)
-            8'b01001101: begin cp <= cpn; d <= in; end // RETI
-            endcase
-
-        3:  casex (extend)
-            8'b01001101: begin sw <= 0; pc <= {in, d[7:0]}; iff1 <= 1'b1; `TERM end // RETI
-            endcase
+        0: begin ed <= 1; end
 
     endcase
     8'b11xxx100,
@@ -571,6 +557,15 @@ else if (ce) begin
         1: begin we <= 1; d <= sp - 2; n <= 3; w <= 1; cp <= sp - 2; sw <= 1; out <= pc[7:0]; end
         2: begin we <= 1; out <= pc[15:8]; cp <= cpn; pc <= {opc[5:3], 3'b000}; end
         3: begin `TERM; end
+
+    endcase
+
+    // Расширенные инструкции ED:
+    9'b1_01001101: case (t)
+
+        1: begin d <= sp + 2; sw <= 1; cp <= sp; w <= 1; n <= 3; end
+        2: begin d <= in; cp <= cpn; end
+        3: begin sw <= 0; pc <= {in, d[7:0]}; iff1 <= 1'b1; `TERM end
 
     endcase
 

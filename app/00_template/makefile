@@ -1,4 +1,4 @@
 all:
 	z80asm main.asm -o main.bin
 	php ../../bin2mif.php 64 main.bin ../../c5/m64.mif
-	../../lcr580 main.bin -d > main.log
+	../../lcr580 main.bin > main.log
