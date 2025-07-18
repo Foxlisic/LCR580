@@ -87,7 +87,7 @@ wire [ 7:0] op20 =
     opc[2:0] == 3'b100 ? hl[15:8] : opc[2:0] == 3'b101 ? hl[ 7:0] :
     opc[2:0] == 3'b110 ? in       : a;
 // ---------------------------------------------------------------------
-wire [ 7:0] opc  = t ? (ed && t == 1 ? in : opcode) : in;
+wire [ 7:0] opc  = t > ed ? opcode : in;
 wire [15:0] pcn  = pc + 1;
 wire [15:0] cpn  = cp + 1;
 wire        m53  = opc[5:3] == 3'b110;
@@ -193,11 +193,9 @@ else if (ce) begin
     port_rd <= 0;       // Чтение из порта
     port_we <= 0;       // Запись в порт
 
-    // Запись опкода на первом такте выполнения инструкции
-    if (m0) begin opcode <= in; pc <= pcn; end
-
-    // Расширенная инструкция
-    if (ed && t == 1) opcode <= in;
+    // 1 Запись опкода на первом такте выполнения инструкции
+    // 3 Расширенная инструкция
+    if (m0 || (ed && t == 1)) begin opcode <= in; pc <= pcn; end
 
     // Исполнение инструкции
     casex ({ed,opc})
@@ -561,7 +559,7 @@ else if (ce) begin
     endcase
 
     // Расширенные инструкции ED:
-    9'b1_01001101: case (t)
+    9'b1_01001101: case (t) // 4T RETI
 
         1: begin d <= sp + 2; sw <= 1; cp <= sp; w <= 1; n <= 3; end
         2: begin d <= in; cp <= cpn; end
