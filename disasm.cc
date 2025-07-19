@@ -230,10 +230,11 @@ int disasm(int addr, int oppad = 0)
     int prefix = 0;
 
     ds_opcode[0]  = 0;
-    ds_operand[0] = 0;
     ds_prefix[0]  = 0;
     ds_ad   = addr;
     ds_size = 0;
+
+    for (int i = 0; i < 32; i++) ds_operand[i] = 0;
 
     // -----------------------------------------------------------------
     // Считывание опкода и префиксов

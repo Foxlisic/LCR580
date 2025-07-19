@@ -1,13 +1,13 @@
 ; Переменные
 ; ------------------------------------------------------------------------------
-curcl:      defb    $00
+color:      defb    $00
 curxy:      defw    $0000
 
 ; Чистка экрана от мусора
 ; ------------------------------------------------------------------------------
 
 cls:        ld      b, a
-            ld      (curcl), a
+            ld      (color), a
             rrca
             rrca
             rrca
@@ -36,7 +36,7 @@ stosb:      ld      (hl), a
 ; Печать символа A в позиции H=Y,L=X
 ; ------------------------------------------------------------------------------
 
-pchr:       push    hl
+pchar:      push    hl
             push    de
             push    bc
             push    hl
@@ -44,13 +44,7 @@ pchr:       push    hl
             sub     a, $20              ; Сместить ASCII
             jr      nc, pchar_L1
             xor     a
-pchar_L1:   ld      h, 0
-            ld      l, a
-            ld      bc, zxfont
-            add     hl, hl
-            add     hl, hl
-            add     hl, hl
-            add     hl, bc              ; DE=zxfont+8*(a-20h)
+pchar_L1:   call    calchra
             ex      de, hl              ; Восстановить HL
             ld      bc, $4000
             add     hl, bc
@@ -63,8 +57,29 @@ pchar_L0:   ld      a, (de)
             ld      l, a
             djnz    pchar_L0
             pop     hl
+            call    attra
+            ld      a, (color)
+            ld      (hl), a             ; Обновление атрибута
+            pop     bc
+            pop     de
+            pop     hl
+            ret
+
+; HL = zxfont + 8*A Вычислить адрес знакоместа по A [0..n]
+; ------------------------------------------------------------------------------
+calchra:    ld      h, 0
+            ld      l, a
+            ld      bc, zxfont
+            add     hl, hl
+            add     hl, hl
+            add     hl, hl
+            add     hl, bc
+            ret
+
+; HL = $5800 + H*32 + L Вычисление адреса атрибута
+; ------------------------------------------------------------------------------
+attra:      ld      c, l
             ld      b, 0x58             ; Установка атрибута
-            ld      c, l
             ld      l, h
             ld      h, 0
             add     hl, hl
@@ -73,16 +88,11 @@ pchar_L0:   ld      a, (de)
             add     hl, hl
             add     hl, hl
             add     hl, bc              ; HL=0x5800 + 32*Y + C
-            ld      a, (curcl)
-            ld      (hl), a             ; Обновление атрибута
-            pop     bc
-            pop     de
-            pop     hl
             ret
 
 ; Пропечать A в режиме телетайпа (HL)
 ; ------------------------------------------------------------------------------
-tchar:      call    pchr
+tchar:      call    pchar
             inc     l
             ld      a, l
             and     $1F
@@ -102,3 +112,21 @@ pstr:       ld      a, (de)
             ret     z
             call    tchar
             jr      pstr
+
+; Обновление символа ZXFont из DE -> A
+; ------------------------------------------------------------------------------
+upsym:      push    af
+            push    bc
+            push    hl
+            sub     a, $20
+            call    calchra
+            ld      b, 8
+upsym1:     ld      a, (de)
+            ld      (hl), a
+            inc     de
+            inc     hl
+            djnz    upsym1
+            pop     hl
+            pop     bc
+            pop     af
+            ret

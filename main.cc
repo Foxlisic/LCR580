@@ -160,11 +160,18 @@ int main(int argc, char** argv)
                 }
 
                 // Отладчик
-                if (dump && lcr580->m0)
+                if (lcr580->m0)
                 {
-                    disasm(lcr580->address, 8);
-                    printf("  %04X [%02X] %04X %04X %04X %04X :: %s %s\n", lcr580->address, lcr580->in, lcr580->bc, lcr580->de, lcr580->hl, lcr580->af, ds_opcode, ds_operand);
-                    if (lcr580->in == 0x76) dump = 0;
+                    if (dump) {
+
+                        disasm(lcr580->address, 8);
+                        printf("  %04X [%02X] bc.%04X de.%04X hl.%04X af.%04X :: %s %s\n", lcr580->address, lcr580->in, lcr580->bc, lcr580->de, lcr580->hl, lcr580->af, ds_opcode, ds_operand);
+                    }
+
+                    // Активация или деактивация дампа
+                    if (lcr580->in == 0x76) { dump = 0; }
+                    if (lcr580->in == 0x40) { dump = 1; dump_init = 1; }
+                    if (lcr580->in == 0x7F) { dump = 0; dump_init = 0; }
 
                 } else if (dump == 2) {
                     printf("- %04X [%02X] %c\n", lcr580->address, lcr580->in, lcr580->we ? 'w' : ' ');
